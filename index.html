@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>B.Tech Notepad</title>
+    <style>
+        body { margin: 0; display: flex; height: 100vh; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: #121212; color: #e0e0e0; }
+        
+        /* Sidebar */
+        #sidebar { width: 280px; background: #1e1e1e; border-right: 1px solid #333; display: flex; flex-direction: column; }
+        .sidebar-header { padding: 20px; text-align: center; }
+        #newBtn { width: 100%; padding: 12px; background: #0078d4; color: white; border: none; border-radius: 4px; cursor: pointer; font-weight: bold; }
+        #newBtn:hover { background: #005a9e; }
+        #noteList { overflow-y: auto; flex-grow: 1; }
+        .note-item { padding: 15px; cursor: pointer; border-bottom: 1px solid #2d2d2d; transition: 0.2s; }
+        .note-item:hover { background: #2d2d2d; }
+        .active { background: #333333; border-left: 4px solid #0078d4; }
+
+        /* Main Area */
+        #main { flex-grow: 1; display: flex; flex-direction: column; }
+        header { padding: 10px 20px; background: #1e1e1e; font-size: 12px; color: #888; display: flex; justify-content: space-between; }
+        #editor { flex-grow: 1; background: transparent; color: white; border: none; outline: none; padding: 40px; font-size: 18px; line-height: 1.6; resize: none; }
+    </style>
+</head>
+<body>
+
+    <div id="sidebar">
+        <div class="sidebar-header">
+            <button id="newBtn" onclick="createNewNote()">+ NEW NOTE</button>
+        </div>
+        <div id="noteList"></div>
+    </div>
+
+    <div id="main">
+        <header>
+            <span id="status">Status: Checking Server...</span>
+            <span id="noteIdDisplay">No Note Selected</span>
+        </header>
+        <textarea id="editor" placeholder="Select a note from the left or create a new one..." disabled></textarea>
+    </div>
+
+    <script>
+        const API = "http://localhost:3000";
+        let currentNoteId = null;
+        let saveTimeout = null;
+
+        // 1. Fetch and Display Sidebar
+        async function loadSidebar() {
+            try {
+                const res = await fetch(`${API}/notes`);
+                const notes = await res.json();
+                document.getElementById('status').innerText = "Status: Connected";
+                
+                const list = document.getElementById('noteList');
+                list.innerHTML = notes.map(n => `
+                    <div class="note-item ${n.id === currentNoteId ? 'active' : ''}" onclick="selectNote('${n.id}')">
+                        <strong>${n.title || "Untitled"}</strong>
+                    </div>
+                `).join('');
+            } catch (err) {
+                document.getElementById('status').innerText = "Status: Server Offline (Run node server.js)";
+            }
+        }
+
+        // 2. Create a New Note
+        async function createNewNote() {
+            try {
+                const res = await fetch(`${API}/notes/new`, { method: 'POST' });
+                const newNote = await res.json();
+                currentNoteId = newNote.id;
+                selectNote(newNote.id);
+            } catch (err) {
+                alert("Cannot connect to backend. Is server.js running?");
+            }
+        }
+
+        // 3. Select and Load Note into Editor
+        async function selectNote(id) {
+            currentNoteId = id;
+            const res = await fetch(`${API}/notes`);
+            const notes = await res.json();
+            const note = notes.find(n => n.id === id);
+            
+            const editor = document.getElementById('editor');
+            editor.disabled = false;
+            editor.value = note.content;
+            editor.focus();
+            
+            document.getElementById('noteIdDisplay').innerText = `Editing ID: ${id}`;
+            loadSidebar();
+        }
+
+        // 4. Auto-Save Logic (PUT request)
+        document.getElementById('editor').addEventListener('input', (e) => {
+            document.getElementById('status').innerText = "Status: Typing...";
+            clearTimeout(saveTimeout);
+
+            saveTimeout = setTimeout(async () => {
+                if (!currentNoteId) return;
+                
+                try {
+                    await fetch(`${API}/notes/${currentNoteId}`, {
+                        method: 'PUT',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ content: e.target.value })
+                    });
+                    document.getElementById('status').innerText = "Status: Saved";
+                    loadSidebar(); // Updates the title in the sidebar
+                } catch (err) {
+                    document.getElementById('status').innerText = "Status: Save Failed!";
+                }
+            }, 800); // Wait 0.8s after typing stops
+        });
+
+        // Initial Load
+        loadSidebar();
+    </script>
+</body>
+</html>
