@@ -1,0 +1,50 @@
+---
+
+## 2. how-to-make.txt
+*Create a file named `how-to-make.txt` and paste this content:*
+
+```text
+===========================================================
+HOW TO BUILD AND RUN WEBPAD PRO (WINDOWS)
+===========================================================
+
+STEP 1: INITIALIZE THE PROJECT
+------------------------------
+1. Open your project folder in File Explorer.
+2. Click the address bar, type 'cmd', and press Enter.
+3. Run: npm init -y
+
+STEP 2: INSTALL DEPENDENCIES
+----------------------------
+1. In the same command prompt, run: 
+   npm install express cors
+
+STEP 3: CREATE THE FILES
+------------------------
+1. Create 'server.js' and paste the Node.js/Express code.
+2. Create 'index.html' and paste the Frontend HTML/JS code.
+3. Create a '.gitignore' file and add:
+   node_modules/
+   notes.json
+
+STEP 4: RUN THE BACKEND
+-----------------------
+1. In the command prompt, run: 
+   node server.js
+2. KEEP THIS WINDOW OPEN. The server must be running for the app to work.
+
+STEP 5: RUN THE FRONTEND
+------------------------
+1. Right-click 'index.html' and select "Open with Live Server" 
+   (or simply double-click the file to open in your browser).
+2. Click "+ NEW NOTE" to unlock the editor and start typing.
+
+STEP 6: PUSH TO GITHUB
+----------------------
+1. git init
+2. git add .
+3. git commit -m "Initial commit: Full-stack notepad"
+4. git branch -M main
+5. git remote add origin [YOUR_GITHUB_REPO_URL]
+6. git push -u origin main
+===========================================================
